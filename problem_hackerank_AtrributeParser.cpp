@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include <unordered_map>
+#include <stack>
 using namespace std;
 
 void handle(string& s){
@@ -17,14 +19,37 @@ void handle(string& s){
     }
 }
 
-string outcome(string s, std::vector<string>& v){
-    if
+string outcome(string s, std::vector<string> v,
+            std::unordered_map<string, std::unordered_map<string, string>>& tags){
+    if(s.empty()) return "Not Found!";
+    int pos_wave = s.find('~');
+    int pos_dot = s.find('.');
+    if(pos_wave == string::npos) return "Not Found!";
+    
+    if(pos_dot == string::npos){
+        string tag_name = s.substr(0, pos_wave);
+        string attr = s.substr(pos_wave+1);
+        if(!tags.count(tag_name) || !tags[tag_name].count(attr))
+            return "Not Found!";
+        else  
+            return tags[tag_name][attr];
+    }else{
+        string tag_name = s.substr(0, pos_dot);
+        auto it = find(v.begin(), v.end(), tag_name);
+        if(it == v.end())
+            return "Not Found!";
+        s.erase(0, pos_dot+1);
+        v.erase(v.begin(), ++it);
+        return outcome(s, v, tags);
+    }
+    return "Not Found!";
 }
 
 int main() {
     string s, tag_name;
     int N(-1), Q(-1), ln(0);
-    std::vector<string> tag_realtion;
+    std::stack<string> tag_realtion;
+    std::unordered_map<string, string> nest_relation;
     std::unordered_map<string, std::unordered_map<string, string>> tags;
     while(cin){
         getline(cin, s);
@@ -39,7 +64,7 @@ int main() {
             if(tag_end == string::npos){ // with tag name 
                 int tag_name_pos = s.find(' ');
                 tag_name = s.substr(0, tag_name_pos);
-                tag_realtion.push_back(tag_name);
+                tag_realtion.push(tag_name);
                 string left_str = s.substr(tag_name_pos+1);
                 
                 string attr, value;
@@ -64,15 +89,22 @@ int main() {
                         }
                     }
                 }
-            }else{ // the tag content is over here
-                
-            }    
+            }else{ // begin find nest relation
+                tag_name = s.substr(tag_end+1);
+                while(!tag_realtion.empty()){
+                    if(tag_realtion.top() == tag_name){
+                        tag_realtion.pop();
+                    }else{
+                        nest_relation[tag_realtion.top()] = tag_name;
+                        break;
+                    }
+                }
+            }  
         }else{//begin to query
-            int dot_pos = s.find('.');
-            int wave_pos = s.find('~');
-            outcome(s, tag_realtion);
+            //cout << outcome(s, tag_realtion, tags) << "\n";
         }
         ln++;
+        if(ln > N+Q) break;
     }
     
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */   
