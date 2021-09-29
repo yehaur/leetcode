@@ -17,6 +17,10 @@ void handle(string& s){
     }
 }
 
+string outcome(string s, std::vector<string>& v){
+    if
+}
+
 int main() {
     string s, tag_name;
     int N(-1), Q(-1), ln(0);
@@ -35,29 +39,42 @@ int main() {
             if(tag_end == string::npos){ // with tag name 
                 int tag_name_pos = s.find(' ');
                 tag_name = s.substr(0, tag_name_pos);
-                tag_realtion.push_back(tag_name); cout<<tag_name<<": ";
+                tag_realtion.push_back(tag_name);
                 string left_str = s.substr(tag_name_pos+1);
-                while(left_str.size()){ 
-                    int equal_sign_pos = left_str.find('=');
-                    int next_attr_pos = left_str.find(' ');
-                    string attr = left_str.substr(0, equal_sign_pos);
-                    string value = left_str.substr(equal_sign_pos+1,
-                                        next_attr_pos-equal_sign_pos-1);
-                    if(attr.size()){
-                        tags[tag_name][attr] = value;
-                        std::cout << "\t" << attr << "=" << value<<"\n";
+                
+                string attr, value;
+                int putAttr(1), putValue(0); 
+                for(int i=0; i<left_str.size(); i++){
+                    if(left_str[i] == '='){
+                        putAttr = 0;
+                        putValue = 1;
+                    }else{
+                        if(left_str[i]!=' ' && putAttr){
+                            attr.push_back(left_str[i]);
+                        }
+                        if(left_str[i]!=' ' && putValue){
+                            value.push_back(left_str[i]);
+                        }
+                        if((left_str[i]==' '||i==left_str.size()-1) && value.size()){
+                            tags[tag_name][attr] = value;
+                            putAttr = 1;
+                            putValue = 0;
+                            attr.resize(0);
+                            value.resize(0);
+                        }
                     }
-                    left_str.erase(0, next_attr_pos);
                 }
             }else{ // the tag content is over here
-                //tag_realtion.push_back(tag_name);
+                
             }    
         }else{//begin to query
-            
+            int dot_pos = s.find('.');
+            int wave_pos = s.find('~');
+            outcome(s, tag_realtion);
         }
         ln++;
     }
-    for(auto a:tag_realtion) cout << a<< " ";
+    
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */   
     return 0;
 }
