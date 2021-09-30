@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <unordered_set>
 #include <unordered_map>
 #include <stack>
 using namespace std;
@@ -19,28 +20,42 @@ void handle(string& s){
     }
 }
 
-string outcome(string s, std::vector<string> v,
-            std::unordered_map<string, std::unordered_map<string, string>>& tags){
+string outcome(string s, std::unordered_map<string, unordered_set<string>>& relation,
+            std::unordered_map<string, std::unordered_map<string, string>>& tags, 
+            string key){
     if(s.empty()) return "Not Found!";
+    if(key.size() && !relation.count(key)) return "Not Found!";
+    
     int pos_wave = s.find('~');
     int pos_dot = s.find('.');
-    if(pos_wave == string::npos) return "Not Found!";
+    //if(pos_wave == string::npos) return "Not Found!";
     
     if(pos_dot == string::npos){
         string tag_name = s.substr(0, pos_wave);
         string attr = s.substr(pos_wave+1);
-        if(!tags.count(tag_name) || !tags[tag_name].count(attr))
+        if(key.empty()&&tag_name=="tag8") cout << attr << "!!!!!!!" << relation.count("tag8")<<"\n";
+        if(key.empty() && !relation.count(tag_name))
+            return "Not Found!";
+        else if(key.empty() && relation.count(tag_name)){
+            if(!tags[tag_name].count(attr))
+                return "Not Found!";
+            else 
+                return (tags[tag_name][attr]==""?"Not Found!":tags[tag_name][attr]);
+        }else if(!relation.count(key) || !relation[key].count(tag_name))
             return "Not Found!";
         else  
-            return tags[tag_name][attr];
+            return (tags[tag_name][attr]==""?"Not Found!":tags[tag_name][attr]);
     }else{
         string tag_name = s.substr(0, pos_dot);
-        auto it = find(v.begin(), v.end(), tag_name);
-        if(it == v.end())
-            return "Not Found!";
         s.erase(0, pos_dot+1);
-        v.erase(v.begin(), ++it);
-        return outcome(s, v, tags);
+        if(!relation.count(tag_name))
+            return "Not Found!";
+        else if(key.empty())
+            return outcome(s, relation, tags, tag_name);
+        else if(!relation.count(key) || !relation[key].count(tag_name))
+            return "Not Found!";
+        else 
+            return outcome(s, relation, tags, tag_name); 
     }
     return "Not Found!";
 }
@@ -49,7 +64,7 @@ int main() {
     string s, tag_name;
     int N(-1), Q(-1), ln(0);
     std::stack<string> tag_realtion;
-    std::unordered_map<string, string> nest_relation;
+    std::unordered_map<string, unordered_set<string>> nest_relation;
     std::unordered_map<string, std::unordered_map<string, string>> tags;
     while(cin){
         getline(cin, s);
@@ -93,20 +108,26 @@ int main() {
                 tag_name = s.substr(tag_end+1);
                 while(!tag_realtion.empty()){
                     if(tag_realtion.top() == tag_name){
+                        if(tag_realtion.size() == 1 && 
+                            !nest_relation.count(tag_realtion.top()))
+                            nest_relation[tag_realtion.top()] = {};
                         tag_realtion.pop();
                     }else{
-                        nest_relation[tag_realtion.top()] = tag_name;
+                        nest_relation[tag_realtion.top()].insert(tag_name);
                         break;
                     }
                 }
+                if(ln == N){
+                    
+                }
             }  
         }else{//begin to query
-            //cout << outcome(s, tag_realtion, tags) << "\n";
+            cout << outcome(s, nest_relation, tags, "") << "\n";
         }
         ln++;
         if(ln > N+Q) break;
     }
-    
+
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */   
     return 0;
 }
