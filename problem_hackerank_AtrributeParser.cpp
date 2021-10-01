@@ -26,7 +26,8 @@ void handle(string& s){
         if(s[spaces_equal_sign] == ' ')
             s.erase(spaces_equal_sign, 1);
         handle(s);
-        s[spaces_equal_sign-1] = '=';
+        spaces_equal_sign = s.find(':');
+        s[spaces_equal_sign] = '=';
     }
 }
 
@@ -94,6 +95,7 @@ int main() {
                 string left_str = s.substr(tag_name_pos+1);
                 
                 string attr, value;
+                //cout << tag_name << ":\n";
                 int putAttr(1), putValue(0), beginPutValue(0); 
                 for(int i=0; i<left_str.size(); i++){
                     if(left_str[i] == '='){
@@ -102,7 +104,9 @@ int main() {
                     }else if(left_str[i] == '"'){
                         beginPutValue = !beginPutValue;
                         if(!beginPutValue && value.size()){
+                            //cout << "    "<< attr << "=" <<value << "\n";
                             tag->attrs[attr] = value;
+                            tags[tag_name] = tag;
                             putAttr = 1;
                             putValue = 0;
                             attr.resize(0);
@@ -117,21 +121,16 @@ int main() {
                         }
                     }
                 }
-                tags[tag_name] = tag;
             }else{ // begin find nest relation
                 tag_name = s.substr(tag_end+1);
-                while(!tag_realtion.empty()){
-                    if(tag_realtion.top() == tag_name){
-                        tag_realtion.pop();
-                    }else{
-                        //nest_relation[tag_realtion.top()] = tag_name;
-                        tags[tag_realtion.top()]->kids.insert(new Tags(tags[tag_name]));
-                        tags.erase(tag_name);
-                        break;
-                    }
+                tag_realtion.pop();
+                if(!tag_realtion.empty()){
+                    tags[tag_realtion.top()]->kids.insert(new Tags(tags[tag_name]));
+                    tags.erase(tag_name);
                 }
             }
-            if(ln==N) {
+        }else{//begin to query
+            if(ln==N+1) {
                 for(auto a: tags){
                     cout << a.first << ": \n";
                     cout << "Has kids: ";
@@ -141,8 +140,7 @@ int main() {
                     for(auto c:a.second->attrs)
                         cout<<"    "<<c.first << "="<<c.second << "\n";
                 } 
-            } 
-        }else{//begin to query
+            }
             //cout << outcome(s, tag_realtion, tags) << "\n";
         }
         ln++;
