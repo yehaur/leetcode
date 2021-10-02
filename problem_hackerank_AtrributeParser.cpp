@@ -1,3 +1,5 @@
+// from https://www.hackerrank.com/challenges/attribute-parser/problem
+
 #include <cmath>
 #include <cstdio>
 #include <vector>
@@ -9,22 +11,17 @@
 using namespace std;
 
 void handle(string& s){
-    if(s.size() && s[0]=='<') s.erase(0, 1);
-    if(s.size() && s.back()=='>') s.pop_back();
-    
-    /*int double_quote_pos = s.find('"');
-    while(double_quote_pos != string::npos){
-        s.erase(double_quote_pos, 1);
-        double_quote_pos = s.find('"');
-    }*/
+    if(s.size() && (s[0]=='<' || s[0]==' ')) s.erase(0, 1);
+    if(s.size() && (s.back()=='>' || s.back()==' ')) s.pop_back();
     
     int spaces_equal_sign = s.find('=');
     if(spaces_equal_sign != string::npos){
         s[spaces_equal_sign] = ':';
         if(s[spaces_equal_sign-1] == ' ')
             s.erase(spaces_equal_sign-1, 1);
-        if(s[spaces_equal_sign] == ' ')
-            s.erase(spaces_equal_sign, 1);
+        spaces_equal_sign = s.find('=');
+        if(s[spaces_equal_sign+1] == ' ')
+            s.erase(spaces_equal_sign+1, 1);
         handle(s);
         spaces_equal_sign = s.find(':');
         s[spaces_equal_sign] = '=';
@@ -45,37 +42,42 @@ public:
             kids.insert(new Tags(a));
     };
 };
-/*string outcome(string s, std::vector<string> v,
-            std::unordered_map<string, std::unordered_map<string, string>>& tags){
-    if(s.empty()) return "Not Found!";
-    int pos_wave = s.find('~');
-    int pos_dot = s.find('.');
-    if(pos_wave == string::npos) return "Not Found!";
-    
-    if(pos_dot == string::npos){
-        string tag_name = s.substr(0, pos_wave);
-        string attr = s.substr(pos_wave+1);
-        if(!tags.count(tag_name) || !tags[tag_name].count(attr))
-            return "Not Found!";
-        else  
-            return tags[tag_name][attr];
-    }else{
-        string tag_name = s.substr(0, pos_dot);
-        auto it = find(v.begin(), v.end(), tag_name);
-        if(it == v.end())
-            return "Not Found!";
-        s.erase(0, pos_dot+1);
-        v.erase(v.begin(), ++it);
-        return outcome(s, v, tags);
-    }
-    return "Not Found!";
-}*/
+
+void outcome(string headstr, string leftstr, Tags* tags, string& attr){
+        if(!tags){
+            std::cout << "Not Found!\n";
+            return;
+        }
+        
+        if(leftstr.empty()){
+            if(!tags->attrs.count(attr))
+                std::cout << "Not Found!\n";
+            else 
+                std::cout << tags->attrs[attr] << "\n";
+            return;
+        }
+        
+        int pos_dot = leftstr.find('.');
+        string new_headstr = leftstr.substr(0, pos_dot); 
+        string new_left = leftstr.substr(pos_dot+1);
+        if(pos_dot == string::npos){
+            new_headstr = leftstr;
+            new_left = "";
+        }
+        for(auto kid:tags->kids){
+            if(kid->name == new_headstr){
+                //std::cout << kid->name << "=>" << new_left << "\n";
+                outcome(new_headstr, new_left, kid, attr);
+                return;
+            }
+        }
+        std::cout << "Not Found!\n";            
+}
 
 int main() {
     string s, tag_name;
     int N(-1), Q(-1), ln(0);
     std::stack<string> tag_realtion;
-    //std::unordered_map<string, string> nest_relation;
     std::unordered_map<string, Tags*> tags;
     while(cin){
         getline(cin, s);
@@ -89,13 +91,18 @@ int main() {
             int tag_end = s.find('/');
             if(tag_end == string::npos){ // with tag name 
                 int tag_name_pos = s.find(' ');
-                tag_name = s.substr(0, tag_name_pos);
+                if(tag_name_pos != string::npos)
+                    tag_name = s.substr(0, tag_name_pos);
+                else 
+                    tag_name = s;
                 tag_realtion.push(tag_name);
                 Tags* tag = new Tags(tag_name);
                 string left_str = s.substr(tag_name_pos+1);
+                if(tag_name_pos == string::npos)
+                    left_str = "";
                 
                 string attr, value;
-                //cout << tag_name << ":\n";
+                //cout << tag_name << ": "<< left_str << "\n";
                 int putAttr(1), putValue(0), beginPutValue(0); 
                 for(int i=0; i<left_str.size(); i++){
                     if(left_str[i] == '='){
@@ -105,6 +112,8 @@ int main() {
                         beginPutValue = !beginPutValue;
                         if(!beginPutValue && value.size()){
                             //cout << "    "<< attr << "=" <<value << "\n";
+                            handle(attr);
+                            handle(value);
                             tag->attrs[attr] = value;
                             tags[tag_name] = tag;
                             putAttr = 1;
@@ -121,6 +130,8 @@ int main() {
                         }
                     }
                 }
+                if(left_str.empty())
+                    tags[tag_name] = tag;
             }else{ // begin find nest relation
                 tag_name = s.substr(tag_end+1);
                 tag_realtion.pop();
@@ -130,18 +141,19 @@ int main() {
                 }
             }
         }else{//begin to query
-            if(ln==N+1) {
-                for(auto a: tags){
-                    cout << a.first << ": \n";
-                    cout << "Has kids: ";
-                    for(auto b:a.second->kids)
-                        cout << b->name << " ";
-                    cout << "\n";
-                    for(auto c:a.second->attrs)
-                        cout<<"    "<<c.first << "="<<c.second << "\n";
-                } 
+            int pos_wave = s.find('~'), pos_dot=s.find('.');
+            string valstr = s.substr(pos_wave+1);
+            if(pos_dot != string::npos){
+                string headstr = s.substr(0, pos_dot);
+                string leftstr = s.substr(pos_dot+1, pos_wave-pos_dot-1);
+                outcome(headstr, leftstr, tags[headstr], valstr);
+            }else{
+                string headstr = s.substr(0, pos_wave);
+                if(!tags.count(headstr) || !tags[headstr]->attrs.count(valstr))
+                    std::cout << "Not Found!\n";
+                else
+                    std::cout << tags[headstr]->attrs[valstr] << "\n"; 
             }
-            //cout << outcome(s, tag_realtion, tags) << "\n";
         }
         ln++;
         if(ln > N+Q) break;
