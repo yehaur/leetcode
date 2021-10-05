@@ -12,6 +12,6 @@ public:
     
     int getMoneyAmount(int n) {
         vector < vector <int> > dp(n + 1, vector <int> (n + 1, INT_MAX));
-        return recur(0, n, dp);
+        return recur(1, n, dp);
     }
 };
