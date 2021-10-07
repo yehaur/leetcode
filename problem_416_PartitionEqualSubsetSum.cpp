@@ -25,3 +25,25 @@ public:
         return comb(nums, v, 0, total/2);
     }
 };
+
+
+// DP method
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int n(nums.size());
+        if(n == 1) return false;
+        int total(0);
+        for(int i:nums) total += i;
+        if(total%2) return false;
+        vector<int> dp(total/2+1, 0);
+        
+        for(int i:nums){
+            for(int j=total/2; j>=i; j--){
+                if(j==i || dp[j-i])
+                    dp[j] = 1;
+            }
+        }
+        return dp[total/2];
+    }
+};
