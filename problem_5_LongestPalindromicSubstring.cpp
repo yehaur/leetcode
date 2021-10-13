@@ -1,3 +1,5 @@
+// Seems DP method is slower than two pointer!
+
 class Solution {
 public:
     string longestPalindrome(string s) {
@@ -7,28 +9,14 @@ public:
         
         for(int i=0; i<n; i++) dp[i][i] = 1;
         
-        for(int i=0; i<n; i++)
-            for(int j=i; j<n; j++){
-                if(s[i] != s[j])
-                    dp[i][j] = -1;
-                else{
-                    int l(i+1), r(j-1);
-                    while(l <= r){
-                        if(s[l] != s[r]){
-                            dp[i][j] = -1;
-                            dp[l][r] = -1;
-                            break;
-                        }
-                        if(l != r)
-                            dp[i][j] = max(dp[i][j], 2+dp[l][r]);
-                        else
-                            dp[i][j] = max(dp[i][j], 1+dp[l][r]);
-                        l++;
-                        r--;
-                    }
+        for(int gap=0; gap<n; gap++)
+            for(int i=0, j=i+gap; j<n; i++, j++){
+                if(s[i] == s[j]){
+                    if(j==i+1) dp[i][j] = 1;
+                    else if(j > i) dp[i][j] = dp[i+1][j-1];
                 }
-                if(len < dp[i][j]){
-                    len = j - i + 1;
+                if(dp[i][j] && gap+1>len){
+                    len = gap+1;
                     ans = s.substr(i, len);
                 }
             }
