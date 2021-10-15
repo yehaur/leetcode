@@ -1,34 +1,22 @@
 class Solution {
 public:
-    bool guess(int p1, int p2, int s1, int s2, vector<int> left){
-        if(left.empty()) return s1>=s2;
-        if(left.size()==1) return s1+p1*left[0] >= s2+p2*left[0];
+    int calc(int i, int j, vector<vector<int>>& dp, vector<int>& v){
+        if(i > j) return 0;
+        if(i == j) return v[i];
+        if(j-i == 1) return max(v[i], v[j]);
         
-        bool res;
-        int f=left[0], b=left.back();
-        if(p1){
-            left.erase(left.begin());
-            res = guess(0, 1, s1+f, s2, left);
-            left.insert(left.begin(), f);
-            if(res) return true;
-            left.pop_back();
-            res = res || guess(0, 1, s1+b, s2, left);
-            left.push_back(b);
-        }else{
-            left.erase(left.begin());
-            res = guess(1, 0, s1, s2+f, left);
-            left.insert(left.begin(), f);
-            if(res) return true;
-            left.pop_back();
-            res = res || guess(1, 0, s1, s2+b, left);
-            left.push_back(b);
-        }
-        return res;
+        if(dp[i][j] != -1) return dp[i][j];
+        
+        int way1 = v[i]+min(calc(i+2, j, dp, v), calc(i+1, j-1, dp, v)); // player1 select the first element
+        int way2 = v[j]+min(calc(i+1,j-1,dp, v), calc(i, j-2, dp, v)); // if player2 select the end element
+        dp[i][j] = max(way1, way2);
+        return dp[i][j];
     }
     
     bool PredictTheWinner(vector<int>& nums) {
-        int n(nums.size());
-        
-        return guess(1,0,0,0,nums);
+        int n(nums.size()), s(std::accumulate(nums.begin(), nums.end(), 0));
+        vector<vector<int>> dp(n, vector<int>(n, -1));
+        int res = calc(0, n-1, dp, nums);
+        return res >= s-res;
     }
 };
